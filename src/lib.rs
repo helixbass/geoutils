@@ -58,6 +58,10 @@ pub use formula::Distance;
 /// Location defines a point using its latitude and longitude.
 #[derive(Debug, PartialEq, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
+)]
 pub struct Location(f64, f64);
 
 impl Location {

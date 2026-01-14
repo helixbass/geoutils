@@ -5,6 +5,10 @@ use std::fmt;
 /// Distance represents a physical distance in a certain unit.
 #[derive(Debug, PartialEq, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
+)]
 pub struct Distance(f64);
 
 impl fmt::Display for Distance {
