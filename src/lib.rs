@@ -53,6 +53,8 @@
 #![deny(missing_docs)]
 mod formula;
 
+#[cfg(feature = "rkyv")]
+pub use formula::ArchivedDistance;
 pub use formula::Distance;
 
 /// Location defines a point using its latitude and longitude.
@@ -60,7 +62,8 @@ pub use formula::Distance;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "rkyv",
-    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    rkyv(compare(PartialEq), derive(Debug))
 )]
 pub struct Location(f64, f64);
 
@@ -159,5 +162,53 @@ mod tests {
         let jakarta = Location::new(-6.125556, 106.655833);
 
         assert_eq!(JAKARTA, jakarta)
+    }
+
+    #[cfg(feature = "rkyv")]
+    #[test]
+    fn test_rkyv_location() {
+        let location = Location::new(-6.125556, 106.655833);
+
+        let bytes = rkyv::to_bytes::<rkyv::rancor::Error>(&location).unwrap();
+
+        assert_eq!(
+            rkyv::from_bytes::<Location, rkyv::rancor::Error>(&bytes).unwrap(),
+            location,
+        );
+
+        let archived_location =
+            rkyv::access::<ArchivedLocation, rkyv::rancor::Error>(&bytes).unwrap();
+        assert_eq!(archived_location, &location);
+        assert_eq!(&location, archived_location);
+
+        // SAFETY: We generated these bytes in this test and also just
+        // accessed them in a checked way
+        let archived_location = unsafe { rkyv::access_unchecked::<ArchivedLocation>(&bytes) };
+        assert_eq!(archived_location, &location);
+        assert_eq!(&location, archived_location);
+    }
+
+    #[cfg(feature = "rkyv")]
+    #[test]
+    fn test_rkyv_distance() {
+        let distance = Distance::from_meters(2000.0);
+
+        let bytes = rkyv::to_bytes::<rkyv::rancor::Error>(&distance).unwrap();
+
+        assert_eq!(
+            rkyv::from_bytes::<Distance, rkyv::rancor::Error>(&bytes).unwrap(),
+            distance,
+        );
+
+        let archived_distance =
+            rkyv::access::<ArchivedDistance, rkyv::rancor::Error>(&bytes).unwrap();
+        assert_eq!(archived_distance, &distance);
+        assert_eq!(&distance, archived_distance);
+
+        // SAFETY: We generated these bytes in this test and also just
+        // accessed them in a checked way
+        let archived_distance = unsafe { rkyv::access_unchecked::<ArchivedDistance>(&bytes) };
+        assert_eq!(archived_distance, &distance);
+        assert_eq!(&distance, archived_distance);
     }
 }
